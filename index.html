@@ -111,7 +111,6 @@
   }
   .history-item span{cursor:pointer;}
 
-  /* Version label */
   .version{
     position:absolute;
     bottom:10px;
@@ -144,11 +143,11 @@
     <div style="text-align:center; color:var(--muted);">No codes yet</div>
   </div>
 
-  <div class="version">v1.1</div> <!--Added favicon-->
+  <div class="version">v1.2</div> <!--Added special characters to the possible characters in a code.-->
 </div>
 
 <script>
-  const CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}|;:,.<>?/`~';
   const codeEl = document.getElementById('code');
   const generateBtn = document.getElementById('generate');
   const lengthInput = document.getElementById('length');
