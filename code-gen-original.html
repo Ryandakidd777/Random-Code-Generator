@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>26-Character Random Code Generator</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --accent:#60a5fa; --muted:#94a3b8;
+      --glass: rgba(255,255,255,0.03);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(180deg,#061029 0%, #071126 60%);
+      color:#e6eef8;
+      padding:28px;
+    }
+    .wrap{
+      width:920px;
+      max-width:96vw;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:14px;
+      padding:20px;
+      box-shadow: 0 6px 30px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.03);
+      display:grid;
+      grid-template-columns: 1fr 380px;
+      gap:18px;
+    }
+
+    header{
+      grid-column:1 / -1;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+
+    .generator{
+      padding:18px;
+      background:var(--glass);
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.02);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .display{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .code-field{
+      flex:1;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size:16px;
+      padding:12px 14px;
+      border-radius:10px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+      border:1px solid rgba(255,255,255,0.03);
+      color:#e6eef8;
+      user-select:all;
+      word-break:break-all;
+    }
+    .controls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    button{
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.06);
+      padding:8px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      color:inherit;
+      font-weight:600;
+      transition: all .12s ease;
+      backdrop-filter: blur(4px);
+    }
+    button.primary{
+      background: linear-gradient(90deg, rgba(96,165,250,0.12), rgba(96,165,250,0.08));
+      border-color: rgba(96,165,250,0.22);
+      color:var(--accent);
+    }
+    button.ghost{
+      background:transparent;
+      border-color: rgba(255,255,255,0.03);
+    }
+    button:hover{transform:translateY(-2px)}
+    .small{font-size:13px;padding:6px 10px}
+
+    .options{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      color:var(--muted);
+      font-size:13px;
+    }
+    input[type=number]{
+      width:86px;
+      padding:8px 10px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.03);
+      background:transparent;
+      color:inherit;
+    }
+
+    .sidebar{
+      padding:18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.02);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .sidebar h2{margin:0;font-size:14px}
+    .meta{color:var(--muted);font-size:13px}
+    .history{
+      overflow:auto;
+      max-height:44vh;
+      padding:8px;
+      border-radius:8px;
+      background:rgba(255,255,255,0.01);
+      border:1px dashed rgba(255,255,255,0.02);
+    }
+    .item{
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      padding:8px;
+      align-items:center;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size:13px;
+      border-radius:8px;
+      margin-bottom:8px;
+      background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+      border:1px solid rgba(255,255,255,0.02);
+    }
+    .item time{color:var(--muted);font-size:12px;margin-left:8px}
+    .item .item-controls{display:flex;gap:6px}
+    .empty{color:var(--muted);font-size:13px;padding:10px;text-align:center}
+
+    footer{grid-column:1 / -1;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px}
+    a.smalllink{color:var(--muted);text-decoration:none;font-size:13px}
+    @media (max-width:880px){
+      .wrap{grid-template-columns:1fr; padding:16px}
+      .sidebar{order:2}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" role="application" aria-label="Random code generator">
+    <header>
+      <div>
+        <h1>26-Character Random Code Generator</h1>
+        <p class="lead">Securely generate 26-character random codes (letters + numbers). Uses Web Crypto API.</p>
+      </div>
+      <div style="text-align:right">
+        <p class="meta">Length: <strong id="lenLabel">26</strong> • Characters: A–Z a–z 0–9</p>
+      </div>
+    </header>
+
+    <section class="generator" aria-labelledby="gen-label">
+      <div class="display" role="status" aria-live="polite">
+        <div id="code" class="code-field" title="Click to copy">— Click Generate —</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button id="generateBtn" class="primary">Generate</button>
+          <button id="copyBtn" class="ghost small">Copy</button>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="options" title="Change how many codes are generated">
+          <label for="count">Generate count</label>
+          <input id="count" type="number" min="1" max="250" value="1" />
+          <button id="genMultiple" class="small">Generate</button>
+          <button id="gen10" class="small">Generate 10</button>
+        </div>
+
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <label for="lengthInput" style="display:none">Length</label>
+          <input id="lengthInput" type="number" min="1" max="200" value="26" aria-label="Code length" />
+          <button id="downloadBtn" class="small">Download .txt</button>
+          <button id="clearBtn" class="small">Clear history</button>
+        </div>
+      </div>
+
+      <p style="margin:0;color:var(--muted);font-size:13px">
+        Tip: Click the code to quickly copy. For best randomness we use the browser's crypto API.
+      </p>
+    </section>
+
+    <aside class="sidebar" aria-labelledby="history-label">
+      <div>
+        <h2 id="history-label">History</h2>
+        <p class="meta">Last generated codes (most recent first)</p>
+      </div>
+
+      <div id="history" class="history" role="list">
+        <div class="empty">No codes yet — generate one!</div>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:space-between;align-items:center">
+        <div class="meta" id="countMeta">Total: 0</div>
+        <div>
+          <button id="copyAll" class="small">Copy all</button>
+        </div>
+      </div>
+    </aside>
+
+    <footer>
+      <div>Made with ❤️ — Secure random via Web Crypto</div>
+      <div><a class="smalllink" href="#" id="about">About</a></div>
+    </footer>
+  </div>
+
+  <script>
+    (function(){
+      const CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      const defaultLenInput = document.getElementById('lengthInput');
+      const lenLabel = document.getElementById('lenLabel');
+      const codeEl = document.getElementById('code');
+      const generateBtn = document.getElementById('generateBtn');
+      const copyBtn = document.getElementById('copyBtn');
+      const historyEl = document.getElementById('history');
+      const clearBtn = document.getElementById('clearBtn');
+      const countMeta = document.getElementById('countMeta');
+      const countInput = document.getElementById('count');
+      const genMultiple = document.getElementById('genMultiple');
+      const gen10 = document.getElementById('gen10');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const copyAllBtn = document.getElementById('copyAll');
+
+      let history = [];
+
+      function secureRandomIndex(max){
+        // returns integer in [0, max)
+        // use rejection sampling to avoid modulo bias
+        const maxUint = 0xFFFFFFFF;
+        const out = new Uint32Array(1);
+        const bound = Math.floor((maxUint + 1) / max) * max;
+        while(true){
+          crypto.getRandomValues(out);
+          if(out[0] < bound){
+            return out[0] % max;
+          }
+        }
+      }
+
+      function generateCode(length = 26){
+        const chars = CHARSET;
+        const arr = new Array(length);
+        // for small lengths using getRandomValues per-call is fine; we'll use secureRandomIndex to avoid bias
+        for(let i=0;i<length;i++){
+          arr[i] = chars.charAt(secureRandomIndex(chars.length));
+        }
+        return arr.join('');
+      }
+
+      function updateLenLabel(){
+        const v = Number(defaultLenInput.value) || 26;
+        lenLabel.textContent = v;
+      }
+
+      function addToHistory(item){
+        history.unshift({code:item, ts: new Date()});
+        // cap history to reasonable number
+        if(history.length > 500) history.length = 500;
+        renderHistory();
+      }
+
+      function renderHistory(){
+        historyEl.innerHTML = '';
+        if(history.length === 0){
+          const e = document.createElement('div');
+          e.className = 'empty';
+          e.textContent = 'No codes yet — generate one!';
+          historyEl.appendChild(e);
+        } else {
+          history.forEach((h, idx) => {
+            const item = document.createElement('div');
+            item.className = 'item';
+            item.setAttribute('role','listitem');
+
+            const left = document.createElement('div');
+            left.style.display = 'flex';
+            left.style.alignItems = 'center';
+
+            const txt = document.createElement('div');
+            txt.textContent = h.code;
+            txt.title = 'Click to copy this code';
+            txt.style.cursor = 'pointer';
+            txt.addEventListener('click', () => {
+              navigator.clipboard.writeText(h.code).then(()=>flashItem(item,'Copied!'),()=>flashItem(item,'Copy failed'));
+            });
+
+            const t = document.createElement('time');
+            t.textContent = formatTime(h.ts);
+
+            left.appendChild(txt);
+            left.appendChild(t);
+
+            const controls = document.createElement('div');
+            controls.className = 'item-controls';
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'small';
+            copyBtn.textContent = 'Copy';
+            copyBtn.addEventListener('click', () => {
+              navigator.clipboard.writeText(h.code).then(()=>flashItem(item,'Copied!'),()=>flashItem(item,'Copy failed'));
+            });
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'small';
+            removeBtn.textContent = 'Remove';
+            removeBtn.addEventListener('click', () => {
+              history.splice(idx,1);
+              renderHistory();
+            });
+
+            controls.appendChild(copyBtn);
+            controls.appendChild(removeBtn);
+
+            item.appendChild(left);
+            item.appendChild(controls);
+            historyEl.appendChild(item);
+          });
+        }
+        countMeta.textContent = 'Total: ' + history.length;
+      }
+
+      function formatTime(d){
+        // concise local timestamp
+        return ' ' + d.toLocaleString();
+      }
+
+      function flashItem(el, msg){
+        const orig = el.style.boxShadow;
+        el.style.boxShadow = '0 0 0 3px rgba(96,165,250,0.12)';
+        const old = el.querySelector('time');
+        if(old) old.textContent = ' ' + new Date().toLocaleString() + ' • ' + msg;
+        setTimeout(()=>{ el.style.boxShadow = orig; renderHistory(); }, 650);
+      }
+
+      // Attach events
+      generateBtn.addEventListener('click', () => {
+        const len = Number(defaultLenInput.value) || 26;
+        const code = generateCode(len);
+        codeEl.textContent = code;
+        addToHistory(code);
+      });
+
+      genMultiple.addEventListener('click', () => {
+        const count = Math.max(1, Math.min(250, Number(countInput.value) || 1));
+        const len = Number(defaultLenInput.value) || 26;
+        if(count === 1){
+          const code = generateCode(len);
+          codeEl.textContent = code;
+          addToHistory(code);
+          return;
+        }
+        // generate multiple
+        const arr = [];
+        for(let i=0;i<count;i++){
+          arr.push(generateCode(len));
+        }
+        // show the first in main field
+        codeEl.textContent = arr[0];
+        arr.forEach(c => addToHistory(c));
+      });
+
+      gen10.addEventListener('click', () => {
+        countInput.value = 10;
+        genMultiple.click();
+      });
+
+      copyBtn.addEventListener('click', () => {
+        const text = codeEl.textContent.trim();
+        if(!text || text === '— Click Generate —') return;
+        navigator.clipboard.writeText(text).then(()=> {
+          // small visual feedback
+          copyBtn.textContent = 'Copied';
+          setTimeout(()=> copyBtn.textContent = 'Copy', 900);
+        }, ()=> {
+          copyBtn.textContent = 'Fail';
+          setTimeout(()=> copyBtn.textContent = 'Copy', 900);
+        });
+      });
+
+      // click main code to copy
+      codeEl.addEventListener('click', () => {
+        const text = codeEl.textContent.trim();
+        if(!text || text === '— Click Generate —') return;
+        navigator.clipboard.writeText(text).then(()=> {
+          codeEl.style.boxShadow = '0 0 0 4px rgba(96,165,250,0.12)';
+          setTimeout(()=> codeEl.style.boxShadow = '', 750);
+        }, ()=> {
+          // ignore errors
+        });
+      });
+
+      clearBtn.addEventListener('click', ()=> {
+        if(!confirm('Clear history?')) return;
+        history = [];
+        renderHistory();
+      });
+
+      downloadBtn.addEventListener('click', ()=> {
+        if(history.length === 0){
+          alert('No codes to download.');
+          return;
+        }
+        const txt = history.map(h => h.code).join('\\n');
+        const blob = new Blob([txt], {type: 'text/plain;charset=utf-8'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'codes.txt';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      });
+
+      copyAllBtn.addEventListener('click', ()=> {
+        if(history.length === 0) return alert('No codes to copy.');
+        const all = history.map(h => h.code).join('\\n');
+        navigator.clipboard.writeText(all).then(()=> alert('All codes copied to clipboard.'), ()=> alert('Copy failed.'));
+      });
+
+      defaultLenInput.addEventListener('input', () => {
+        updateLenLabel();
+        // reflect in main header label
+      });
+
+      // init
+      updateLenLabel();
+      renderHistory();
+
+      // expose generate to console for convenience
+      window.generateRandomCode = function(len = Number(defaultLenInput.value) || 26){
+        return generateCode(len);
+      };
+    })();
+  </script>
+</body>
+</html>
